@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Creation Process - Interactive Workflow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236366f1' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .glass-card:hover::before {
+            left: 100%;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 48px 0 rgba(31, 38, 135, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .connector {
+            position: relative;
+            margin: 2rem 0;
+        }
+
+        .connector::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 2px;
+            height: 40px;
+            background: linear-gradient(180deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+            animation: flow 2s ease-in-out infinite;
+        }
+
+        @keyframes flow {
+            0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scaleY(0.8); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scaleY(1); }
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .list-item {
+            position: relative;
+            padding-left: 2rem;
+            margin-bottom: 0.75rem;
+            color: rgba(255, 255, 255, 0.85);
+            animation: slideIn 0.5s ease forwards;
+            opacity: 0;
+            animation-delay: calc(var(--item-index) * 0.1s);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .list-item::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.5), transparent);
+            margin: 4rem 0;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .icon-bg {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #a5b4fc;
+        }
+
+        @media (max-width: 768px) {
+            .glass-card {
+                margin: 1rem;
+            }
+
+            .step-number {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="text-gray-100">
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl relative z-10">
+
+        <header class="text-center mb-16 floating">
+            <div class="mb-6">
+                <span class="badge">Workflow Guide</span>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-bold mb-4">
+                <span class="gradient-text font-['Space_Grotesk']">Agent Creation</span>
+            </h1>
+            <h2 class="text-2xl md:text-3xl font-light text-gray-300 mb-2">Deployment Workflow</h2>
+            <p class="text-lg text-gray-400 max-w-2xl mx-auto">Comprehensive procedures for X and Instagram platform automation</p>
+        </header>
+
+        <section id="x-workflow" class="mb-20">
+            <div class="text-center mb-12">
+                <div class="icon-bg">
+                    <span>🚀</span>
+                </div>
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-3">X Platform Workflow</h2>
+                <p class="text-gray-400">Complete setup and deployment process</p>
+            </div>
+
+            <div class="max-w-4xl mx-auto">
+
+                <div class="glass-card p-8 mb-8">
+                    <div class="flex items-start gap-6">
+                        <div class="step-number">1</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-white mb-3">Core Agent Configuration</h3>
+                            <p class="text-gray-300 mb-4">Initialize agent in <a href="https://app.qstarlabs.ai" target="_blank" class="text-purple-400 hover:text-purple-300 underline">app.qstarlabs.ai</a> with precise settings</p>
+                            <ul class="space-y-2">
+                                <li class="list-item" style="--item-index: 1">Configure guidelines & news sources</li>
+                                <li class="list-item" style="--item-index: 2">Select appropriate model & client</li>
+                                <li class="list-item" style="--item-index: 3">Assign administrative permissions</li>
+                                <li class="list-item" style="--item-index: 4">Define topic specialization (iGaming & Casino)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="connector"></div>
+
+                <div class="glass-card p-8 mb-8">
+                    <div class="flex items-start gap-6">
+                        <div class="step-number">2</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-white mb-3">Register in Tracking System</h3>
+                            <p class="text-gray-300 mb-4">Document agent details and capture unique Agent ID</p>
+                            <div class="flex flex-wrap gap-4 mt-6">
+                                <a href="https://docs.google.com/spreadsheets/d/1NRGfhWNtIjf1oa_QRxmL1hy_RmmXFUdgyHcXvoFN8mA/edit?gid=0#gid=0" target="_blank" class="btn-secondary">
+                                    BlockDAG Registry →
+                                </a>
+                                <a href="https://docs.google.com/spreadsheets/d/1emXa6jHo0NFk271SzudIFTgXXvdLc6qsR8x8HDzFVjc/edit?gid=853601202#gid=853601202" target="_blank" class="btn-secondary">
+                                    Spartans Registry →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="connector"></div>
+
+                <div class="glass-card p-8 mb-8">
+                    <div class="flex items-start gap-6">
+                        <div class="step-number">3</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-white mb-3">Create & Configure X Account</h3>
+                            <p class="text-gray-300 mb-4">Establish standardized X profile using registered email</p>
+                            <ul class="space-y-2">
+                                <li class="list-item" style="--item-index: 1">Apply uniform password protocol</li>
+                                <li class="list-item" style="--item-index: 2">Import avatar from agent persona</li>
+                                <li class="list-item" style="--item-index: 3">Generate bio via Nano Banana (Gemini)</li>
+                                <li class="list-item" style="--item-index: 4">Record X Account ID in tracking system</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="connector"></div>
+
+                <div class="glass-card p-8 mb-8">
+                    <div class="flex items-start gap-6">
+                        <div class="step-number">4</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-white mb-3">Platform Integration</h3>
+                            <p class="text-gray-300 mb-4">Link X account via Settings → Connect in QStar</p>
+                            <ul class="space-y-2">
+                                <li class="list-item" style="--item-index: 1">Complete authentication workflow</li>
+                                <li class="list-item" style="--item-index: 2">Configure KOL interaction lists</li>
+                                <li class="list-item" style="--item-index: 3">Update status: "Connected" & "Live"</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="connector"></div>
+
+                <div class="glass-card p-8 mb-8">
+                    <div class="flex items-start gap-6">
+                        <div class="step-number">5</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-white mb-3">Initialize Content Pipeline</h3>
+                            <p class="text-gray-300 mb-4">Generate and publish initial posts to establish account activity baseline</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="connector"></div>
+
+                <div class="glass-card p-8 mb-8">
+                    <div class="flex items-start gap-6">
+                        <div class="step-number">6</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-white mb-3">Deploy Child Agents</h3>
+                            <p class="text-gray-300 mb-4">Generate spawned agents through Agent Management interface</p>
+                            <ul class="space-y-2">
+                                <li class="list-item" style="--item-index: 1">Create required number of instances</li>
+                                <li class="list-item" style="--item-index: 2">Document all spawned agent IDs</li>
+                                <li class="list-item" style="--item-index: 3">Apply Steps 3-4 to each spawned agent</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <section id="instagram-workflow" class="mb-20">
+            <div class="text-center mb-12">
+                <div class="icon-bg">
+                    <span>📱</span>
+                </div>
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-3">Instagram Platform Workflow</h2>
+                <p class="text-gray-400">Streamlined deployment process</p>
+            </div>
+
+            <div class="max-w-4xl mx-auto">
+
+                <div class="glass-card p-8 mb-8">
+                    <div class="flex items-start gap-6">
+                        <div class="step-number">1</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-white mb-3">Account Creation</h3>
+                            <p class="text-gray-300 mb-4">Establish Instagram presence for each agent</p>
+                            <ul class="space-y-2">
+                                <li class="list-item" style="--item-index: 1">Utilize corresponding X account email</li>
+                                <li class="list-item" style="--item-index: 2">Generate avatar with Nano Banana (Gemini)</li>
+                                <li class="list-item" style="--item-index: 3">Maintain consistent brand identity</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="connector"></div>
+
+                <div class="glass-card p-8 mb-8">
+                    <div class="flex items-start gap-6">
+                        <div class="step-number">2</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-white mb-3">Registration & Whitelisting</h3>
+                            <p class="text-gray-300 mb-4">Document accounts and submit for approval</p>
+                            <ul class="space-y-2">
+                                <li class="list-item" style="--item-index: 1">Register in designated Excel tracker</li>
+                                <li class="list-item" style="--item-index: 2">Share credentials with Dorian/Matt</li>
+                                <li class="list-item" style="--item-index: 3">Await whitelisting confirmation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="connector"></div>
+
+                <div class="glass-card p-8 mb-8">
+                    <div class="flex items-start gap-6">
+                        <div class="step-number">3</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-white mb-3">Platform Connection</h3>
+                            <p class="text-gray-300 mb-4">Complete integration post-whitelisting via <a href="https://app.qstarlabs.ai" target="_blank" class="text-purple-400 hover:text-purple-300 underline">app.qstarlabs.ai</a></p>
+                            <div class="mt-6">
+                                <span class="badge">Final Step</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <footer class="text-center py-8 mt-20 border-t border-gray-800">
+            <p class="text-gray-500 text-sm">Agent Creation Workflow Guide • 2024</p>
+        </footer>
+
+    </div>
+</body>
+</html>
